@@ -1,7 +1,25 @@
 [project]
 name = "tmdb-cli"
 version = "0.1.0"
-description = "TMDB API CLI — 电影与剧集信息刮削工具"
+description = "TMDB API CLI — movie and TV series metadata scraper"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "sfxfs", email = "2501683578@qq.com" }
+]
+keywords = ["tmdb", "movie", "tv", "metadata", "scraper", "nfo", "kodi", "cli"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Utilities",
+]
 requires-python = ">=3.11"
 dependencies = [
     "typer>=0.12",
@@ -9,7 +27,6 @@ dependencies = [
     "pydantic>=2.0",
     "rich>=13.0",
 ]
-
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",

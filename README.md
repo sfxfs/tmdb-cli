@@ -5,20 +5,25 @@ TMDB API v3 command-line tool for scraping movie and TV series metadata.
 ## Installation
 
 ```sh
-git clone <repo-url> && cd tmdb-cli
-uv sync
+pip install tmdb-cli
+# or
+pipx install tmdb-cli
+# or use uv
+uv tool install tmdb-cli
+# skill for coding agent
+npx skills add https://github.com/sfxfs/tmdb-cli --skill tmdb-cli
 ```
 
-Requires Python 3.11+. Managed with [uv](https://docs.astral.sh/uv/).
+Requires Python 3.11+. From source: `git clone <repo-url> && cd tmdb-cli && uv sync`.
 
 ## Setup
 
 Get a **TMDB API Read Access Token** from [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api).
 
 ```sh
-tmdb config set <YOUR_BEARER_TOKEN>
+tmdb config set token <YOUR_BEARER_TOKEN>
 tmdb config validate
-```
+tmdb config set language zh-CN en    # optional: set preferred languages
 
 Token is stored at `~/.config/tmdb-cli/config.toml`.
 
