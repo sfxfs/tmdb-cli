@@ -65,9 +65,10 @@ class TestClientWithMock:
                 c.get("/movie/999999")
             assert exc.value.status_code == 404
 
-    def test_missing_token(self) -> None:
+    def test_missing_token(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Client without token must raise on construction."""
         import typer
 
+        monkeypatch.setattr("tmdb_cli.client.get_token", lambda: None)
         with pytest.raises(typer.BadParameter):
             TMDbClient(token="")

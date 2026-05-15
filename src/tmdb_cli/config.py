@@ -7,10 +7,12 @@ Configuration stored under `~/.config/tmdb-cli/config.toml` (XDG Base Directory)
 
     [preferences]
     language = "zh-CN"
+    fallback_language = "en"
 """
 
 from __future__ import annotations
 
+import json as _json
 import tomllib
 from pathlib import Path
 from typing import Any, cast
@@ -51,6 +53,12 @@ def get_language() -> str:
     return cast(str, cfg.get("preferences", {}).get("language", "zh-CN"))
 
 
+def get_fallback_language() -> str | None:
+    """Return fallback image/download language, or None if not set."""
+    cfg = load_config()
+    return cast(str | None, cfg.get("preferences", {}).get("fallback_language"))
+
+
 # ---- Minimal TOML serialization (avoids tomli_w dependency) ----
 
 
@@ -69,7 +77,6 @@ def _toml_dumps(data: dict[str, Any], *, _prefix: str = "") -> list[str]:
             if not _prefix:
                 lines.append(f"{key} = {_toml_value(val)}")
             else:
-                # already written inside the parent dict's [section]
                 lines.append(f"{key} = {_toml_value(val)}")
     return lines
 
@@ -84,16 +91,43 @@ def _toml_value(v: str | int | float | bool) -> str:
 
 # ---- CLI subcommands ----
 
-config_app = typer.Typer(name="config", help="Manage TMDB API Key")
+
+config_app = typer.Typer(name="config", help="Manage API key and preferences")
+set_app = typer.Typer(name="set", help="Set configuration values")
 
 
-@config_app.command(name="set")
-def config_set(key: str = typer.Argument(..., help="TMDB API Read Access Token")) -> None:
+@set_app.command(name="token")
+def config_set_token(
+    key: str = typer.Argument(..., help="TMDB API Read Access Token"),
+) -> None:
     """Set the TMDB API Bearer Token."""
     cfg = load_config()
     cfg.setdefault("api", {})["bearer_token"] = key
     save_config(cfg)
     typer.echo(f"API Key saved to {CONFIG_FILE}")
+
+
+@set_app.command(name="language")
+def config_set_language(
+    language: str = typer.Argument(..., help="Preferred metadata language (e.g. zh-CN, en)"),
+    fallback: str | None = typer.Argument(None, help="Fallback language for images (e.g. en, null)"),
+) -> None:
+    """Set preferred language and optional fallback."""
+    cfg = load_config()
+    prefs = cfg.setdefault("preferences", {})
+    prefs["language"] = language
+    if fallback is not None:
+        prefs["fallback_language"] = fallback
+    elif "fallback_language" in prefs:
+        del prefs["fallback_language"]
+    save_config(cfg)
+    msg = f"Language set to: {language}"
+    if fallback:
+        msg += f" (fallback: {fallback})"
+    typer.echo(msg)
+
+
+config_app.add_typer(set_app)
 
 
 @config_app.command(name="show")
@@ -103,8 +137,6 @@ def config_show() -> None:
     if not cfg:
         typer.echo("No settings configured.")
         return
-    import json as _json
-
     typer.echo(_json.dumps(cfg, ensure_ascii=False, indent=2))
 
 
@@ -115,7 +147,7 @@ def config_validate() -> None:
 
     token = get_token()
     if not token:
-        typer.echo("API Key is not set. Run `tmdb config set <KEY>` first", err=True)
+        typer.echo("API Key is not set. Run `tmdb config set token <KEY>` first", err=True)
         raise typer.Exit(1)
 
     try:

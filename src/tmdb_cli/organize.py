@@ -30,7 +30,7 @@ from typing import Any
 import typer
 
 from .client import TMDbClient, get_image_url
-from .config import get_language
+from .config import get_fallback_language, get_language
 from .export import _esc
 from .models import (
     Episode,
@@ -58,7 +58,14 @@ def _resolve_lang(language: str | None) -> str:
     return language or get_language()
 
 
-# ── Shared helpers ─────────────────────────────────────
+def _image_lang_filter(language: str | None) -> str:
+    """Build include_image_language param from user flag or config preferences."""
+    if language:
+        return f"{language},null"
+    fallback = get_fallback_language()
+    if fallback:
+        return f"{get_language()},{fallback}"
+    return f"{get_language()},null"
 
 
 def _pick_best(items: list[Any], *, key: Any = lambda x: x.vote_average) -> Any:
@@ -102,11 +109,11 @@ def organize_movie(
     with TMDbClient() as c:
         movie_data = c.get(f"/movie/{movie_id}", params={"language": lang})
         img_data = c.get(f"/movie/{movie_id}/images")
-        if language:
-            img_zh_data = c.get(f"/movie/{movie_id}/images", params={"include_image_language": "zh,null"})
-        else:
-            img_zh_data = img_data
-
+        img_filter = _image_lang_filter(language)
+        img_zh_data = c.get(
+            f"/movie/{movie_id}/images",
+            params={"include_image_language": img_filter},
+        )
     movie = MovieDetail(**movie_data)
     img_all = ImageCollection(**img_data)
     img_zh = ImageCollection(**img_zh_data)
@@ -198,11 +205,11 @@ def organize_tv(
     with TMDbClient() as c:
         tv_data = c.get(f"/tv/{tv_id}", params={"language": lang})
         tv_img_data = c.get(f"/tv/{tv_id}/images")
-        if language:
-            tv_img_zh_data = c.get(f"/tv/{tv_id}/images", params={"include_image_language": "zh,null"})
-        else:
-            tv_img_zh_data = tv_img_data
-
+        img_filter = _image_lang_filter(language)
+        tv_img_zh_data = c.get(
+            f"/tv/{tv_id}/images",
+            params={"include_image_language": img_filter},
+        )
     tv = TVDetail(**tv_data)
     tv_img = TVImageCollection(**tv_img_data)
     tv_img_zh = TVImageCollection(**tv_img_zh_data)
